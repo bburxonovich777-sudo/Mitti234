@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOT COIN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071426;color:white;font-family:Arial,sans-serif;padding-bottom:85px}
+header{padding:18px;display:flex;justify-content:space-between;align-items:center;background:#0d2038;position:sticky;top:0;z-index:5}
+.brand{font-size:21px;font-weight:bold;color:#f6c85f}
+.balance{background:#203954;padding:10px 15px;border-radius:20px}
+main{padding:18px;max-width:600px;margin:auto}
+.page{display:none}.page.active{display:block}
+h1{font-size:34px;margin:15px 0}
+h2{color:#f6c85f}
+.muted{color:#9aadc4;font-size:14px;line-height:1.5}
+.panel,.daily,.task,.auction-card{background:#102640;border:1px solid #24415e;border-radius:17px;padding:16px;margin:13px 0}
+.coinbutton{width:210px;height:210px;border-radius:50%;border:8px solid #f8d77c;background:linear-gradient(145deg,#ffe89b,#d89b24);color:#754900;font-size:75px;display:block;margin:25px auto;box-shadow:0 0 35px #e8ae4166;cursor:pointer}
+.coinbutton:active{transform:scale(.94)}
+.center{text-align:center}
+button{border:0;border-radius:12px;padding:12px 15px;background:#f2c45b;color:#172438;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4}
+.wide{width:100%;margin-top:10px}
+.secondary{background:#203d5b;color:white}
+input{width:100%;padding:13px;border-radius:10px;border:1px solid #35516c;background:#081a2e;color:white;margin:7px 0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stats .panel{text-align:center}
+.stats b{display:block;font-size:23px;color:#f6c85f;margin-top:8px}
+.bar{height:9px;background:#263d56;border-radius:10px;overflow:hidden;margin:12px 0}
+.bar i{display:block;height:100%;width:100%;background:#f2c45b}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0d2038;display:flex;justify-content:space-around;padding:10px 2px;z-index:10;border-top:1px solid #29435e}
+.nav{background:none;color:#b9c9d9;padding:7px;font-size:19px}
+.nav small{display:block;font-size:10px;margin-top:4px}
+.nav.active{color:#f6c85f}
+.task,.auction-card{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.task p,.auction-card p{margin:5px 0;color:#a9bbce;font-size:13px}
+.tag{color:#f6c85f;font-weight:bold}
+.avatar{width:65px;height:65px;border-radius:50%;background:#f2c45b;color:#172438;font-size:30px;display:grid;place-items:center;margin:auto}
+.modal{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modalbox{background:#102640;border:1px solid #38516a;border-radius:20px;padding:25px;width:100%;max-width:400px;text-align:center}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#f2c45b;color:#172438;padding:12px 18px;border-radius:12px;display:none;z-index:30;font-weight:bold;max-width:90%;text-align:center}
+small{color:#9aadc4}
+hr{border-color:#29435e}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="brand">❄ BOT COIN</div>
+ <div class="balance">🪙 <b id="topCoins">0</b></div>
+</header>
+
+<main>
+<section id="home" class="page active">
+ <div class="center">
+  <p class="tag">❄ WINTER SEASON</p>
+  <h1>Coin yig‘ va sovrin yut!</h1>
+  <p class="muted">Tangani bos, vazifalarni bajar va auksionda qatnash.</p>
+ </div>
+ <div class="daily">
+  <div>ENERGIYA <b id="energyText" style="float:right">200 / 200</b></div>
+  <div class="bar"><i id="energyBar"></i></div>
+  <small>Har 5 daqiqada energiya tiklanadi.</small>
+ </div>
+ <button class="coinbutton" id="tapBtn">₿</button>
+ <p class="center muted">Tanga ustiga bosib coin yig‘!</p>
+ <div class="stats">
+  <div class="panel"><small>JAMI COIN</small><b id="homeCoins">0</b></div>
+  <div class="panel"><small>BOSISHLAR</small><b id="tapCount">0</b></div>
+ </div>
+ <button class="wide secondary" onclick="shareApp()">👥 Do‘stni taklif qilish</button>
+</section>
+
+<section id="tasks" class="page">
+ <h2>☑ Vazifalar</h2>
+ <p class="muted">Vazifalarni bajarib qo‘shimcha coin ol.</p>
+ <div id="taskList"></div>
+</section>
+
+<section id="auction" class="page">
+ <h2>🔨 Auksion</h2>
+ <p class="muted">Sovrin uchun coin taklif qil. Eng yuqori taklif g‘olib bo‘ladi.</p>
+ <div id="auctionList"></div>
+</section>
+
+<section id="leaders" class="page">
+ <h2>🏆 Reyting</h2>
+ <div class="panel" id="leaderList"></div>
+</section>
+
+<section id="profile" class="page">
+ <h2>👤 Profil</h2>
+ <div class="panel center">
+  <div class="avatar" id="avatar">B</div>
+  <h3 id="playerName">Foydalanuvchi</h3>
+  <small id="playerTag"></small>
+  <h2><span id="profileCoins">0</span> 🪙</h2>
+ </div>
+ <div class="panel">
+  <h3>📜 Operatsiyalar</h3>
+  <div id="history"></div>
+ </div>
+ <div id="adminArea"></div>
+</section>
+</main>
+
+<nav>
+ <button class="nav active" data-page="home">⌂<small>Asosiy</small></button>
+ <button class="nav" data-page="tasks">☷<small>Vazifalar</small></button>
+ <button class="nav" data-page="auction">⚒<small>Auksion</small></button>
+ <button class="nav" data-page="leaders">🏆<small>Reyting</small></button>
+ <button class="nav" data-page="profile">♙<small>Profil</small></button>
+</nav>
+
+<div class="modal hidden" id="registerModal">
+ <div class="modalbox">
+  <h1>₿</h1>
+  <h2>BOT COIN</h2>
+  <p class="muted">Ro‘yxatdan o‘tish uchun ismingni yoz.</p>
+  <input id="regName" placeholder="Ismingiz" maxlength="35">
+  <button class="wide" onclick="register()">Ro‘yxatdan o‘tish</button>
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();}
+
+const ADMIN_PASSWORD="12345";
+
+let data=JSON.parse(localStorage.getItem("botcoin_data")||"null")||{
+ users:[],
+ auctions:[
+  {id:1,name:"🎧 Quloqchin",description:"Sovrinli auksion",price:50,bidder:"",active:true}
+ ],
+ tasks:[
+  {id:1,name:"BOT COIN kanaliga obuna bo‘lish",reward:100,done:false},
+  {id:2,name:"Do‘stni taklif qilish",reward:50,done:false},
+  {id:3,name:"Kunlik bonus",reward:25,done:false}
+ ]
+};
+
+let me=null;
+let energy=200;
+let lastEnergy=Date.now();
+let taps=0;
+
+function save(){
+ localStorage.setItem("botcoin_data",JSON.stringify(data));
+}
+
+function notify(text){
+ let el=document.getElementById("toast");
+ el.textContent=text;
+ el.style.display="block";
+ setTimeout(()=>el.style.display="none",2200);
+}
+
+function currentUser(){
+ if(!me)return null;
+ return data.users.find(u=>u.id===me.id);
+}
+
+function register(){
+ let name=document.getElementById("regName").value.trim();
+ if(name.length<2){notify("Ismni to‘g‘ri kiriting!");return;}
+ let id=tg?.initDataUnsafe?.user?.id?.toString()||("guest_"+Date.now());
+ let existing=data.users.find(u=>u.id===id);
+ if(existing){me=existing;}
+ else{
+  me={id,name,coins:100,history:["Ro‘yxatdan o‘tish +100"],tasks:[]};
+  data.users.push(me);
+ }
+ save();
+ document.getElementById("registerModal").classList.add("hidden");
+ render();
+ notify("Xush kelibsiz!");
+}
+
+function init(){
+ let id=tg?.initDataUnsafe?.user?.id?.toString();
+ if(id){
+  me=data.users.find(u=>u.id===id)||null;
+ }
+ if(!me){
+  let saved=localStorage.getItem("botcoin_guest");
+  if(saved)me=data.users.find(u=>u.id===saved)||null;
+ }
+ if(!me){
+  document.getElementById("registerModal").classList.remove("hidden");
+ }else{
+  render();
+ }
+}
+
+function addCoins(amount,reason){
+ let u=currentUser();
+ if(!u)return;
+ u.coins+=amount;
+ u.history.unshift(reason+" "+(amount>=0?"+":"")+amount);
+ u.history=u.history.slice(0,30);
+ save();
+ render();
+}
+
+document.getElementById("tapBtn").onclick=()=>{
+ let u=currentUser();
+ if(!u)return;
+ recoverEnergy();
+ if(energy<=0){notify("Energiya tugadi!");return;}
+ energy--;
+ taps++;
+ addCoins(1,"Tanga bosish");
+ updateEnergy();
+};
+
+function recoverEnergy(){
+ let now=Date.now();
+ let count=Math.floor((now-lastEnergy)/300000);
+ if(count>0){
+  energy=Math.min(200,energy+count);
+  lastEnergy+=count*300000;
+ }
+}
+
+function updateEnergy(){
+ document.getElementById("energyText").textContent=energy+" / 200";
+ document.getElementById("energyBar").style.width=(energy/2)+"%";
+}
+
+function render(){
+ let u=currentUser();
+ if(!u)return;
+ document.getElementById("topCoins").textContent=u.coins;
+ document.getElementById("homeCoins").textContent=u.coins;
+ document.getElementById("profileCoins").textContent=u.coins;
+ document.getElementById("playerName").textContent=u.name;
+ document.getElementById("avatar").textContent=u.name[0].toUpperCase();
+ document.getElementById("playerTag").textContent="ID: "+u.id;
+ document.getElementById("tapCount").textContent=taps;
+ document.getElementById("history").innerHTML=u.history.map(x=>"<p>• "+escapeHTML(x)+"</p>").join("")||"Hozircha yo‘q";
+ renderTasks();
+ renderAuctions();
+ renderLeaders();
+ renderAdmin();
+ updateEnergy();
+}
+
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderTasks(){
+ let u=currentUser();
+ document.getElementById("taskList").innerHTML=data.tasks.map(t=>{
+  let done=u.tasks.includes(t.id);
+  return `<div class="task"><div><b>${escapeHTML(t.name)}</b><p>🎁 Mukofot: ${t.reward} coin</p></div>
+  <button ${done?"disabled":""} onclick="completeTask(${t.id})">${done?"Bajarildi":"Olish"}</button></div>`;
+ }).join("");
+}
+
+function completeTask(id){
+ let u=currentUser(),t=data.tasks.find(x=>x.id===id);
+ if(!t||u.tasks.includes(id))return;
+ u.tasks.push(id);
+ addCoins(t.reward,"Vazifa mukofoti");
+ notify("Mukofot olindi!");
+}
+
+function renderAuctions(){
+ document.getElementById("auctionList").innerHTML=data.auctions.filter(a=>a.active).map(a=>`
+ <div class="auction-card">
+  <div><b>${escapeHTML(a.name)}</b><p>${escapeHTML(a.description)}</p>
+  <p>Eng yuqori taklif: <b class="tag">${a.price} coin</b></p>
+  <small>Taklif egasi: ${escapeHTML(a.bidder||"Hali yo‘q")}</small></div>
+  <button onclick="bid(${a.id})">Taklif</button>
+ </div>`).join("")||"<p class='muted'>Hozircha auksion yo‘q.</p>";
+}
+
+function bid(id){
+ let u=currentUser(),a=data.auctions.find(x=>x.id===id);
+ if(!a||!a.active)return;
+ let amount=Number(prompt("Taklif miqdorini kiriting. Hozirgi narx: "+a.price));
+ if(!Number.isFinite(amount)||amount<=a.price){notify("Taklif hozirgi narxdan yuqori bo‘lishi kerak.");return;}
+ if(u.coins<amount){notify("Coin yetarli emas!");return;}
+ a.price=amount;
+ a.bidder=u.name;
+ save();
+ render();
+ notify("Taklif qabul qilindi!");
+}
+
+function renderLeaders(){
+ let sorted=[...data.users].sort((a,b)=>b.coins-a.coins);
+ document.getElementById("leaderList").innerHTML=sorted.map((u,i)=>
+ `<p>${i+1}. <b>${escapeHTML(u.name)}</b> <span class="tag" style="float:right">${u.coins} 🪙</span></p><hr>`
+ ).join("")||"Hozircha foydalanuvchi yo‘q.";
+}
+
+function shareApp(){
+ let link=location.href;
+ if(tg?.openTelegramLink){
+  tg.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent("BOT COIN ga qo‘shil!"));
+ }else if(navigator.share){
+  navigator.share({title:"BOT COIN",url:link});
+ }else{
+  prompt("Havolani nusxalang:",link);
+ }
+}
+
+function renderAdmin(){
+ let area=document.getElementById("adminArea");
+ area.innerHTML=`
+ <div class="panel">
+  <h3>🔐 Admin paneli</h3>
+  <input id="adminPass" type="password" placeholder="Admin paroli">
+  <button class="wide" onclick="loginAdmin()">Kirish</button>
+  <div id="adminTools"></div>
+ </div>`;
+}
+
+function loginAdmin(){
+ if(document.getElementById("adminPass").value!==ADMIN_PASSWORD){
+  notify("Parol noto‘g‘ri!");return;
+ }
+ document.getElementById("adminTools").innerHTML=`
+ <hr><h3>🪙 Coin berish</h3>
+ <input id="targetId" placeholder="Foydalanuvchi ID">
+ <input id="coinAmount" type="number" placeholder="Coin miqdori">
+ <button class="wide" onclick="giveCoins()">Coin qo‘shish</button>
+
+ <hr><h3>🎁 Auksion yaratish</h3>
+ <input id="giftName" placeholder="Sovrin nomi">
+ <input id="giftDesc" placeholder="Tavsif">
+ <input id="giftPrice" type="number" placeholder="Boshlang‘ich narx">
+ <button class="wide" onclick="createAuction()">Auksion qo‘shish</button>
+
+ <hr><h3>📋 Foydalanuvchilar</h3>
+ <div id="userList"></div>
+
+ <hr><h3>📣 Xabar</h3>
+ <textarea id="broadcast" placeholder="Xabar matni" style="width:100%;height:80px"></textarea>
+ <button class="wide" onclick="broadcastMessage()">Xabarni ko‘rsatish</button>
+ `;
+ renderUsers();
+}
+
+function giveCoins(){
+ let id=document.getElementById("targetId").value.trim();
+ let amount=Number(document.getElementById("coinAmount").value);
+ let u=data.users.find(x=>x.id===id);
+ if(!u||!Number.isFinite(amount)||amount<=0){notify("Ma’lumot noto‘g‘ri!");return;}
+ u.coins+=amount;
+ u.history.unshift("Admin coin berdi +"+amount);
+ save();render();renderUsers();
+ notify("Coin qo‘shildi!");
+}
+
+function createAuction(){
+ let name=document.getElementById("giftName").value.trim();
+ let desc=document.getElementById("giftDesc").value.trim();
+ let price=Number(document.getElementById("giftPrice").value);
+ if(!name||!Number.isFinite(price)||price<1){notify("Ma’lumotlarni to‘ldiring!");return;}
+ data.auctions.push({id:Date.now(),name,description:desc,price,bidder:"",active:true});
+ save();render();
+ notify("Auksion yaratildi!");
+}
+
+function renderUsers(){
+ let el=document.getElementById("userList");
+ if(!el)return;
+ el.innerHTML=data.users.map(u=>`<p>${escapeHTML(u.name)} — ${u.coins} coin <small>ID: ${escapeHTML(u.id)}</small></p>`).join("")||"Foydalanuvchi yo‘q.";
+}
+
+function broadcastMessage(){
+ let msg=document.getElementById("broadcast").value.trim();
+ if(!msg)return;
+ alert("Eslatma: bu xabar faqat shu brauzerda ko‘rinadi. Barcha Telegram foydalanuvchilariga yuborish uchun bot backend kerak.\n\n"+msg);
+}
+
+document.querySelectorAll(".nav").forEach(btn=>{
+ btn.onclick=()=>{
+  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(btn.dataset.page).classList.add("active");
+ };
+});
+
+setInterval(()=>{
+ recoverEnergy();
+ updateEnergy();
+},10000);
+
+init();
+</script>
+</body>
+</html>
